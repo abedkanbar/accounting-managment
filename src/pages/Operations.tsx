@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   getOperations,
   createOperation,
@@ -7,48 +7,41 @@ import {
   getMoyenPaiementLabel,
   OperationsTypes,
   PaymentMethodType,
-} from '../lib/api';
-import type { Operation } from '../lib/api';
-import type { OperationsParams, SortDirection } from '@/lib/types';
-import { DataTable } from '../components/ui/data-table';
-import { Button } from '../components/ui/button';
-import {
-  Plus,
-  Pencil,
-  RefreshCw,
-  Copy,
-  Trash2,
-  Loader2,
-  Filter,
-  Download,
-} from 'lucide-react';
-import { useToast } from '../hooks/use-toast';
-import { useReferenceData } from '@/hooks/useReferenceData';
-import { OperationForm } from '@/components/OperationForm';
+} from "@/lib/api";
+import type { Operation } from "@/lib/api";
+import type { OperationsParams, SortDirection } from "@/lib/types";
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import { Plus, Pencil, RefreshCw, Copy, Filter, Download } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useReferenceData } from "@/hooks/useReferenceData";
+import { OperationForm } from "@/components/OperationForm";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { format } from 'date-fns';
-import type { ColumnDef } from '@tanstack/react-table';
-import { Card, CardHeader, CardTitle } from '../components/ui/card';
-import { Container } from '../components/ui/container';
-import { Flex } from '../components/ui/flex';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
+} from "@/components/ui/dialog";
+import { format } from "date-fns";
+import type {
+  ColumnDef,
+  OnChangeFn,
+  SortingState,
+} from "@tanstack/react-table";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Container } from "@/components/ui/container";
+import { Flex } from "@/components/ui/flex";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { generateOperationsReport } from '@/utils/pdfGenerator';
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { generateOperationsReport } from "@/utils/pdfGenerator";
 
 interface FilterState {
   typeOperation?: number;
@@ -59,16 +52,21 @@ interface FilterState {
 
 export default function Operations() {
   const [operations, setOperations] = useState<Operation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isActionLoading, setIsActionLoading] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedOperation, setSelectedOperation] = useState<Operation | null>(
     null
   );
-  const [operationToDelete, setOperationToDelete] = useState<Operation | null>(
-    null
-  );
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const {
+    loading: referenceDataLoading,
+    error: referenceDataError,
+    reload: reloadReferenceData,
+    getContactName,
+    getBankAccountName,
+    months,
+  } = useReferenceData();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -77,39 +75,45 @@ export default function Operations() {
     column: string;
     direction: SortDirection;
   }>({
-    column: '',
-    direction: '',
+    column: "",
+    direction: "",
   });
 
-  const { toast } = useToast();
-  const {
-    loading: referenceDataLoading,
-    error: referenceDataError,
-    reload: reloadReferenceData,
-    getContactName,
-    getBankAccountName,
-    agentPerceptor,
-    contactcotisant,
-    months,
-  } = useReferenceData();
+  const [sorting, setSorting] = useState<SortingState>([]);
 
-  const handleSort = useCallback(
-    (column: string, direction: SortDirection | '') => {
-      setSortConfig({ column, direction });
-      setCurrentPage(1);
-    },
-    []
-  );
+  // Handle sorting changes from DataTable
+  const handleSortingChange: OnChangeFn<SortingState> = (updaterOrValue) => {
+    setSorting(updaterOrValue);
+  };
 
+  // Map SortingState to sortConfig for API calls
+  useEffect(() => {
+    if (sorting.length > 0) {
+      const { id, desc } = sorting[0];
+      setSortConfig({
+        column: id,
+        direction: desc ? "desc" : "asc",
+      });
+    } else {
+      setSortConfig({
+        column: "",
+        direction: "",
+      });
+    }
+  }, [sorting]);
+
+  // Handle page changes
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
 
+  // Handle page size changes
   const handlePageSizeChange = useCallback((size: number) => {
     setPageSize(size);
     setCurrentPage(1);
   }, []);
 
+  // Build API parameters based on current state
   const buildParams = useCallback((): OperationsParams => {
     const params: OperationsParams = {
       page: currentPage,
@@ -128,212 +132,54 @@ export default function Operations() {
     return params;
   }, [currentPage, pageSize, filters, sortConfig]);
 
-  const fetchOperations = useCallback(async () => {
-    try {
-      const params = buildParams();
-      const response = await getOperations(
-        params.page,
-        params.limit,
-        params.idtypeoperation,
-        params.moyenpaiement,
-        params.moiscotisation,
-        params.anneecotisation,
-        params.orderBy,
-        params.orderDir
-      );
-      setOperations(response.data);
-      setTotalItems(response.pagination.total);
-    } catch (error) {
-      console.error('Erreur lors de la récupération des opérations:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les opérations.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [buildParams, toast]);
+  // Load operations based on parameters
+  const loadOperations = useCallback(
+    async (params: OperationsParams) => {
+      try {
+        setLoading(true);
+        const response = await getOperations(
+          params.page,
+          params.limit,
+          params.idtypeoperation,
+          params.moyenpaiement,
+          params.moiscotisation,
+          params.anneecotisation,
+          params.orderBy,
+          params.orderDir
+        );
+        setOperations(response.data);
+        setTotalItems(response.pagination.total);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des opérations:", error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les opérations",
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [toast]
+  );
 
+  // Rebuild parameters whenever dependencies change
+  const params = useMemo(() => buildParams(), [buildParams]);
+
+  // Fetch operations whenever parameters change
   useEffect(() => {
-    fetchOperations();
-  }, [fetchOperations]);
+    loadOperations(params);
+  }, [params, loadOperations]);
 
-  const handleDelete = async () => {
-    if (!operationToDelete?.idoperation) return;
-
-    try {
-      setIsActionLoading(true);
-      // Ici, ajoutez l'appel API pour supprimer l'opération
-      // await deleteOperation(operationToDelete.idoperation);
-      toast({
-        title: 'Succès',
-        description: 'Opération supprimée avec succès.',
-      });
-      fetchOperations();
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
-      toast({
-        title: 'Erreur',
-        description: "Impossible de supprimer l'opération.",
-        variant: 'destructive',
-      });
-    } finally {
-      setIsActionLoading(false);
-      setOperationToDelete(null);
-      setIsDeleteDialogOpen(false);
-    }
-  };
-
-  const handleDuplicate = (operation: Operation) => {
-    const duplicatedOperation = { ...operation };
-    delete duplicatedOperation.idoperation;
-    setSelectedOperation(duplicatedOperation);
-    setIsDialogOpen(true);
-  };
-
-  const clearFilters = () => {
-    setFilters({});
-    setSortConfig({ column: '', direction: '' });
-    setCurrentPage(1);
-  };
-
-  const handleFilterChange = (key: keyof FilterState, value: string | null) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value ? parseInt(value) : undefined,
-    }));
-    setCurrentPage(1);
-  };
-
-  const columns: ColumnDef<Operation>[] = [
-    {
-      accessorKey: 'idoperation',
-      header: 'Id',
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'idcontactcotisant',
-      header: 'Contact',
-      cell: ({ row }) => {
-        const cotisant = getContactName(row.original.idcontactcotisant);
-        return cotisant ? `${cotisant}` : '-';
-      },
-      enableSorting: false,
-    },
-    {
-      accessorKey: 'libelle',
-      header: 'Libellé',
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'dateoperation',
-      header: 'Date',
-      cell: ({ row }) => (
-        <div>{format(new Date(row.original.dateoperation), 'dd/MM/yyyy')}</div>
-      ),
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'idtypeoperation',
-      header: "Type d'opération",
-      cell: ({ row }) => getTypeOperationLabel(row.original.idtypeoperation),
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'refoperation',
-      header: 'Référence',
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'moyenpaiement',
-      header: 'Moyen de paiement',
-      cell: ({ row }) =>
-        row.original.moyenpaiement !== undefined
-          ? getMoyenPaiementLabel(row.original.moyenpaiement)
-          : 'Inconnu',
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'refcheque',
-      header: 'Référence chèque',
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'credit',
-      header: 'Crédit',
-      cell: ({ row }) =>
-        row.original.credit
-          ? `${parseFloat(row.original.credit).toFixed(2)} €`
-          : '0 €',
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'debit',
-      header: 'Débit',
-      cell: ({ row }) =>
-        row.original.debit
-          ? `${parseFloat(row.original.debit).toFixed(2)} €`
-          : '0 €',
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'anneecotisation',
-      header: 'Année',
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'moiscotisation',
-      header: 'Mois',
-      cell: ({ row }) =>
-        months.find((month) => month.value === row.original.moiscotisation)
-          ?.label,
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'idcomptedestination',
-      header: 'Compte',
-      cell: ({ row }) => getBankAccountName(row.original.idcomptedestination),
-      enableSorting: true,
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              setSelectedOperation(row.original);
-              setIsDialogOpen(true);
-            }}
-            title="Modifier"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleDuplicate(row.original)}
-            title="Dupliquer"
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
+  // Handle form submissions for creating/updating operations
   const handleSubmit = async (data: any) => {
     try {
-      setIsActionLoading(true);
       if (selectedOperation?.idoperation) {
         await updateOperation(selectedOperation.idoperation, data);
         toast({
-          variant: 'success',
-          title: 'Succès',
-          description: 'Opération mise à jour avec succès.',
+          variant: "success",
+          title: "Succès",
+          description: "Opération mise à jour avec succès.",
         });
       } else {
         const newOperation = {
@@ -342,47 +188,192 @@ export default function Operations() {
         };
         await createOperation(newOperation);
         toast({
-          variant: 'success',
-          title: 'Succès',
-          description: 'Opération créée avec succès.',
+          variant: "success",
+          title: "Succès",
+          description: "Opération créée avec succès.",
         });
       }
 
-      await fetchOperations();
+      loadOperations(params);
       setIsDialogOpen(false);
       setSelectedOperation(null);
     } catch (error) {
       console.error("Erreur lors de la sauvegarde de l'opération:", error);
       toast({
-        title: 'Erreur',
+        variant: "destructive",
+        title: "Erreur",
         description: "Impossible de sauvegarder l'opération.",
-        variant: 'destructive',
       });
-    } finally {
-      setIsActionLoading(false);
     }
   };
 
-  if (isLoading || referenceDataLoading) {
-    return (
-      <Container size="full" className="h-full flex flex-col p-0">
-        <Card>
-          <CardHeader>
-            <Flex justify="between" align="center">
-              <CardTitle>Opérations</CardTitle>
-              <Skeleton className="h-10 w-[200px]" />
-            </Flex>
-          </CardHeader>
-          <div className="p-6">
-            <div className="space-y-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
+  // Handle filter changes
+  const handleFilterChange = (key: keyof FilterState, value: string | null) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value ? parseInt(value) : undefined,
+    }));
+    setCurrentPage(1);
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({});
+    setSortConfig({ column: "", direction: "" });
+    setSorting([]);
+    setCurrentPage(1);
+  };
+
+  // Define table columns
+  const columns = useMemo<ColumnDef<Operation>[]>(
+    () => [
+      {
+        accessorKey: "idoperation",
+        header: "Id",
+        enableSorting: true,
+      },
+      {
+        accessorKey: "idcontactcotisant",
+        header: "Contact",
+        cell: ({ row }) => {
+          const cotisant = getContactName(row.original.idcontactcotisant);
+          return cotisant ? `${cotisant}` : "-";
+        },
+        enableSorting: false,
+      },
+      {
+        accessorKey: "libelle",
+        header: "Libellé",
+        enableSorting: true,
+      },
+      {
+        accessorKey: "dateoperation",
+        header: "Date",
+        cell: ({ row }) => (
+          <div>
+            {format(new Date(row.original.dateoperation), "dd/MM/yyyy")}
           </div>
-        </Card>
-      </Container>
+        ),
+        enableSorting: true,
+      },
+      {
+        accessorKey: "idtypeoperation",
+        header: "Type d'opération",
+        cell: ({ row }) => getTypeOperationLabel(row.original.idtypeoperation),
+        enableSorting: true,
+      },
+      {
+        accessorKey: "refoperation",
+        header: "Référence",
+        enableSorting: true,
+      },
+      {
+        accessorKey: "moyenpaiement",
+        header: "Moyen de paiement",
+        cell: ({ row }) =>
+          row.original.moyenpaiement !== undefined
+            ? getMoyenPaiementLabel(row.original.moyenpaiement)
+            : "Inconnu",
+        enableSorting: true,
+      },
+      {
+        accessorKey: "refcheque",
+        header: "Référence chèque",
+        enableSorting: true,
+      },
+      {
+        accessorKey: "credit",
+        header: "Crédit",
+        cell: ({ row }) => <div>{row.original.credit} €</div>,
+        enableSorting: true,
+      },
+      {
+        accessorKey: "debit",
+        header: "Débit",
+        cell: ({ row }) => <div>{row.original.debit} €</div>,
+        enableSorting: true,
+      },
+      {
+        accessorKey: "anneecotisation",
+        header: "Année",
+        enableSorting: true,
+      },
+      {
+        accessorKey: "moiscotisation",
+        header: "Mois",
+        cell: ({ row }) =>
+          months.find((month) => month.value === row.original.moiscotisation)
+            ?.label,
+        enableSorting: true,
+      },
+      {
+        accessorKey: "idcomptedestination",
+        header: "Compte",
+        cell: ({ row }) => getBankAccountName(row.original.idcomptedestination),
+        enableSorting: true,
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setSelectedOperation(row.original);
+                setIsDialogOpen(true);
+              }}
+              title="Modifier"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleDuplicate(row.original)}
+              title="Dupliquer"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [getContactName, getTypeOperationLabel, getMoyenPaiementLabel, months]
+  );
+
+  const handleDuplicate = (operation: Operation) => {
+    const duplicatedOperation = { ...operation };
+    delete duplicatedOperation.idoperation;
+    setSelectedOperation(duplicatedOperation);
+    setIsDialogOpen(true);
+  };
+
+  // Handle export to PDF
+  const handleExportPDF = async () => {
+    const operationToExport = await getOperations(
+      1,
+      1000,
+      filters.typeOperation,
+      filters.moyenPaiement,
+      filters.moiscotisation,
+      filters.anneecotisation,
+      sortConfig.column,
+      sortConfig.direction
     );
-  }
+    const allOperations = operationToExport.data;
+    const doc = generateOperationsReport({
+      allOperations,
+      getContactName,
+      months,
+    });
+    doc.save("operations.pdf");
+    toast({
+      title: "Export PDF",
+      description: "Le rapport a été généré avec succès",
+    });
+  };
 
   return (
     <Container size="full" className="h-full flex flex-col p-0">
@@ -423,7 +414,7 @@ export default function Operations() {
           </Alert>
         )}
 
-        <div className="px-6 mb-6">
+        <CardContent>
           <div className="flex items-center gap-2 mb-4">
             <Filter className="h-4 w-4" />
             <h2 className="text-lg font-semibold">Filtres</h2>
@@ -438,32 +429,7 @@ export default function Operations() {
                   </>
                 )}
               </Flex>
-              <Button
-                variant="outline"
-                onClick={async () => {
-                  const operationToExport = await getOperations(
-                    1,
-                    1000,
-                    filters.typeOperation,
-                    filters.moyenPaiement,
-                    filters.moiscotisation,
-                    filters.anneecotisation,
-                    sortConfig.column,
-                    sortConfig.direction
-                  );
-                  const allOperations = operationToExport.data;
-                  const doc = generateOperationsReport({
-                    allOperations,
-                    getContactName,
-                    months,
-                  });
-                  doc.save('operations.pdf');
-                  toast({
-                    title: 'Export PDF',
-                    description: 'Le rapport a été généré avec succès',
-                  });
-                }}
-              >
+              <Button variant="outline" onClick={handleExportPDF}>
                 <Download className="w-4 h-4 mr-2" />
                 Exporter en PDF
               </Button>
@@ -472,11 +438,11 @@ export default function Operations() {
           <div className="grid grid-cols-4 gap-6">
             <div className="w-full">
               <Select
-                value={filters.typeOperation?.toString() || 'all'}
+                value={filters.typeOperation?.toString() || "all"}
                 onValueChange={(value) =>
                   handleFilterChange(
-                    'typeOperation',
-                    value === 'all' ? null : value
+                    "typeOperation",
+                    value === "all" ? null : value
                   )
                 }
               >
@@ -496,11 +462,11 @@ export default function Operations() {
 
             <div className="w-full">
               <Select
-                value={filters.moyenPaiement?.toString() || 'all'}
+                value={filters.moyenPaiement?.toString() || "all"}
                 onValueChange={(value) =>
                   handleFilterChange(
-                    'moyenPaiement',
-                    value === 'all' ? null : value
+                    "moyenPaiement",
+                    value === "all" ? null : value
                   )
                 }
               >
@@ -520,11 +486,11 @@ export default function Operations() {
 
             <div className="w-full">
               <Select
-                value={filters.moiscotisation?.toString() || 'all'}
+                value={filters.moiscotisation?.toString() || "all"}
                 onValueChange={(value) =>
                   handleFilterChange(
-                    'moiscotisation',
-                    value === 'all' ? null : value
+                    "moiscotisation",
+                    value === "all" ? null : value
                   )
                 }
               >
@@ -547,11 +513,11 @@ export default function Operations() {
 
             <div className="w-full">
               <Select
-                value={filters.anneecotisation?.toString() || 'all'}
+                value={filters.anneecotisation?.toString() || "all"}
                 onValueChange={(value) =>
                   handleFilterChange(
-                    'anneecotisation',
-                    value === 'all' ? null : value
+                    "anneecotisation",
+                    value === "all" ? null : value
                   )
                 }
               >
@@ -573,78 +539,50 @@ export default function Operations() {
               </Select>
             </div>
           </div>
-        </div>
+        </CardContent>
 
-        <div className="p-6">
-          <DataTable
-            columns={columns}
-            data={operations}
-            onSort={handleSort}
-            pagination={{
-              pageSize,
-              pageCount: Math.ceil(totalItems / pageSize),
-              currentPage,
-              totalItems,
-              onPageChange: handlePageChange,
-              onPageSizeChange: handlePageSizeChange,
-            }}
-          />
-        </div>
-
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {selectedOperation?.idoperation
-                  ? "Modifier l'opération"
-                  : selectedOperation
-                  ? "Dupliquer l'opération"
-                  : 'Nouvelle opération'}
-              </DialogTitle>
-            </DialogHeader>
-            <OperationForm
-              onSubmit={handleSubmit}
-              initialData={selectedOperation || undefined}
-              isLoading={isActionLoading}
+        <CardContent>
+          {loading || referenceDataLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={operations}
+              sorting={sorting}
+              onSortingChange={handleSortingChange}
+              pagination={{
+                pageSize,
+                pageCount: Math.ceil(totalItems / pageSize),
+                currentPage,
+                totalItems,
+                onPageChange: handlePageChange,
+                onPageSizeChange: handlePageSizeChange,
+              }}
             />
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirmer la suppression</DialogTitle>
-              <DialogDescription>
-                Êtes-vous sûr de vouloir supprimer cette opération ? Cette
-                action est irréversible.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteDialogOpen(false)}
-                disabled={isActionLoading}
-              >
-                Annuler
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={isActionLoading}
-              >
-                {isActionLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Suppression...
-                  </>
-                ) : (
-                  'Supprimer'
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          )}
+        </CardContent>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {selectedOperation?.idoperation
+                ? "Modifier l'opération"
+                : selectedOperation
+                ? "Dupliquer l'opération"
+                : "Nouvelle opération"}
+            </DialogTitle>
+          </DialogHeader>
+          <OperationForm
+            onSubmit={handleSubmit}
+            initialData={selectedOperation || undefined}
+          />
+        </DialogContent>
+      </Dialog>
     </Container>
   );
 }

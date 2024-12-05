@@ -26,7 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ColumnDef, OnChangeFn } from "@tanstack/react-table";
-import debounce from "lodash/debounce";
 import { useReferenceData } from "@/hooks/useReferenceData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SortDirection } from "@/lib/types";
@@ -42,6 +41,7 @@ export default function Adherents() {
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState<string>(
     new Date().getFullYear().toString()
   );
@@ -58,17 +58,20 @@ export default function Adherents() {
   const { toast } = useToast();
   const { contacts, loading: contactsLoading } = useReferenceData();
 
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((term: string) => {
-        setSearchTerm(term);
-        setCurrentPage(1);
-      }, 300),
-    []
-  );
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1);
+    }, 300);
+  
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+  
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    debouncedSearch(e.target.value);
+    setSearchTerm(e.target.value);
   };
 
   const handlePageChange = (page: number) => {
@@ -103,21 +106,14 @@ export default function Adherents() {
 
   useEffect(() => {
     const loadAdherents = async () => {
-      console.log(
-        currentPage,
-        pageSize,
-        selectedYear,
-        searchTerm,
-        sortConfig.column,
-        sortConfig.direction
-      );
+      
       try {
         setLoading(true);
         const response = await getAdherents(
           currentPage,
           pageSize,
           selectedYear !== "all" ? parseInt(selectedYear) : undefined,
-          searchTerm || undefined,
+          debouncedSearchTerm  || undefined,
           sortConfig.column || undefined,
           sortConfig.direction || undefined
         );
@@ -140,7 +136,7 @@ export default function Adherents() {
     currentPage,
     pageSize,
     selectedYear,
-    searchTerm,
+    debouncedSearchTerm,
     sortConfig.column,
     sortConfig.direction, // Ensure this is included
     toast,
@@ -225,6 +221,7 @@ export default function Adherents() {
   const clearFilters = () => {
     setSelectedYear(new Date().getFullYear().toString());
     setSearchTerm("");
+    setDebouncedSearchTerm("");
     setSortConfig({ column: "", direction: "" });
     setCurrentPage(1);
   };
@@ -276,6 +273,7 @@ export default function Adherents() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Input
+                    value={searchTerm}
                     placeholder="Rechercher par nom ou prénom..."
                     onChange={handleSearchChange}
                     className="max-w-sm"

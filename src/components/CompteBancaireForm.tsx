@@ -38,7 +38,7 @@ export function CompteBancaireForm({ onSubmit, initialData }: CompteBancaireForm
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 h-[calc(100vh-10rem)] overflow-y-auto pr-4">
         <FormField
           control={form.control}
           name="libelle"

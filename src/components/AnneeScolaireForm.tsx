@@ -13,11 +13,12 @@ import {
 } from "@/components/ui/form";
 
 interface AnneeScolaireFormProps {
+  onCancel: () => void;
   onSubmit: (data: AnneeScolaireFormData) => void;
   initialData?: Partial<AnneeScolaireFormData>;
 }
 
-export function AnneeScolaireForm({ onSubmit, initialData }: AnneeScolaireFormProps) {
+export function AnneeScolaireForm({ onSubmit, onCancel, initialData }: AnneeScolaireFormProps) {
   const form = useForm<AnneeScolaireFormData>({
     resolver: zodResolver(anneeScolaireSchema),
     defaultValues: {
@@ -73,7 +74,6 @@ export function AnneeScolaireForm({ onSubmit, initialData }: AnneeScolaireFormPr
                   type="number" 
                   step="0.01"
                   {...field}
-                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
                 />
               </FormControl>
               <FormMessage />
@@ -81,7 +81,12 @@ export function AnneeScolaireForm({ onSubmit, initialData }: AnneeScolaireFormPr
           )}
         />
 
+        
         <div className="flex justify-end">
+          <Button type="button" className="mr-4" variant="destructive" onClick={onCancel}>
+            Annuler
+          </Button>
+
           <Button type="submit">
             {initialData ? "Mettre à jour" : "Créer"}
           </Button>

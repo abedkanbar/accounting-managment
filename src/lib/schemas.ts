@@ -32,19 +32,19 @@ export const compteBancaireSchema = z.object({
   adressedomiciliation: z
     .string()
     .min(2, "L'adresse de domiciliation est requise"),
-  codebanque: z.string().length(5, 'Le code banque doit faire 5 caractères'),
-  codeguichet: z.string().length(5, 'Le code guichet doit faire 5 caractères'),
-  nrcompte: z.string().min(11, 'Le numéro de compte est invalide'),
-  clerib: z.string().length(2, 'La clé RIB doit faire 2 caractères'),
-  iban: z.string().min(27, "L'IBAN est invalide"),
-  swift: z.string().min(8, 'Le code SWIFT est invalide'),
-  bic: z.string().min(8, 'Le code BIC est invalide'),
+  codebanque: z.string().optional(),
+  codeguichet: z.string().optional(),
+  nrcompte: z.string().optional(),
+  clerib: z.string().optional(),
+  iban: z.string().optional(),
+  swift: z.string().optional(),
+  bic: z.string().optional(),
 });
 
 export const anneeScolaireSchema = z.object({
   annee: z.number().min(2000, "L'année doit être supérieure à 2000"),
   libelle: z.string().min(2, 'Le libellé est requis'),
-  montantcotisation: z.number().min(0, 'Le montant doit être positif'),
+  montantcotisation: z.coerce.number({ invalid_type_error: 'Le montant doit être un nombre' }).min(0, 'Le montant doit être positif'),
 });
 
 export const appelCotisationSchema = z.object({
@@ -70,8 +70,11 @@ export const operationSchema = z.object({
   refoperation: z.string().optional(),
   moyenpaiement: z.number().min(1, 'Le moyen de paiement est requis'),
   refcheque: z.string().optional(),
-  credit: z.number().min(0, 'Le montant doit être positif'),
-  debit: z.number(),
+  credit: z.coerce
+  .number({ invalid_type_error: 'Le montant doit être un nombre' })
+  .min(0, 'Le montant doit être positif'),
+  debit: z.coerce
+  .number({ invalid_type_error: 'Le montant doit être un nombre' }),
   idcontactpercepteur: z.number().min(1, 'Le contact percepteur est requis'),
   idcontactcotisant: z.number().min(1, 'Le contact cotisant est requis'),
   anneecotisation: z.number().min(0),

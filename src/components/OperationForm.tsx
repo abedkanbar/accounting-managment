@@ -72,10 +72,8 @@ export function OperationForm({
       refoperation: initialData?.refoperation || '',
       moyenpaiement: initialData?.moyenpaiement || 1,
       refcheque: initialData?.refcheque || '',
-      credit: initialData?.credit
-        ? parseFloat(initialData.credit).toFixed(2)
-        : 0,
-      debit: initialData?.debit ? parseFloat(initialData.debit).toFixed(2) : 0,
+      credit: initialData?.credit || 0,
+      debit: initialData?.debit || 0,
       idcontactpercepteur: initialData?.idcontactpercepteur || undefined,
       idcontactcotisant: initialData?.idcontactcotisant || undefined,
       anneecotisation: initialData?.anneecotisation || new Date().getFullYear(),
@@ -160,9 +158,6 @@ export function OperationForm({
                     step="0.01"
                     min="0"
                     {...field}
-                    onChange={(e) =>
-                      field.onChange(parseFloat(e.target.value) || 0)
-                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -180,11 +175,7 @@ export function OperationForm({
                   <Input
                     type="number"
                     step="0.01"
-                    min="0"
                     {...field}
-                    onChange={(e) =>
-                      field.onChange(parseFloat(e.target.value) || 0)
-                    }
                   />
                 </FormControl>
                 <FormMessage />

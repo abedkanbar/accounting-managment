@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { format } from 'date-fns';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, OnChangeFn, SortingState } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -40,6 +40,7 @@ export default function Contacts() {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -53,36 +54,57 @@ export default function Contacts() {
     direction: '',
   });
 
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((term: string) => {
-        setSearchTerm(term);
-        setCurrentPage(1);
-      }, 300),
-    []
-  );
+  const [sorting, setSorting] = useState<SortingState>([]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1);
+    }, 300);
+  
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+  
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    debouncedSearch(e.target.value);
+    setSearchTerm(e.target.value);
   };
 
-  const handleSort = useCallback(
-    (column: string, direction: SortDirection | '') => {
-      setSortConfig({ column, direction });
-      setCurrentPage(1);
-    },
-    []
-  );
+  // Handle sorting changes from DataTable
+  const handleSortingChange: OnChangeFn<SortingState> = (updaterOrValue) => {
+    setSorting(updaterOrValue);
+  };
 
+  // Map SortingState to sortConfig for API calls
+  useEffect(() => {
+    if (sorting.length > 0) {
+      const { id, desc } = sorting[0];
+      setSortConfig({
+        column: id,
+        direction: desc ? 'desc' : 'asc',
+      });
+    } else {
+      setSortConfig({
+        column: '',
+        direction: '',
+      });
+    }
+  }, [sorting]);
+
+  // Handle page changes
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
 
+  // Handle page size changes
   const handlePageSizeChange = useCallback((size: number) => {
     setPageSize(size);
     setCurrentPage(1);
   }, []);
 
+  // Build API parameters based on current state
   const buildParams = useCallback((): ContactsParams => {
     const params: ContactsParams = {
       page: currentPage,
@@ -103,9 +125,11 @@ export default function Contacts() {
     return params;
   }, [currentPage, pageSize, filters, sortConfig, searchTerm]);
 
+  // Load contacts based on parameters
   const loadContacts = useCallback(
     async (params: ContactsParams) => {
       try {
+        setLoading(true);
         const { data, pagination } = await getContacts(
           params.page,
           params.limit,
@@ -121,6 +145,7 @@ export default function Contacts() {
         setContacts(data);
         setTotalItems(pagination.total);
       } catch (error) {
+        console.error('Error loading contacts:', error);
         toast({
           variant: 'destructive',
           title: 'Erreur',
@@ -133,12 +158,15 @@ export default function Contacts() {
     [toast]
   );
 
+  // Rebuild parameters whenever dependencies change
   const params = useMemo(() => buildParams(), [buildParams]);
 
+  // Fetch contacts whenever parameters change
   useEffect(() => {
     loadContacts(params);
   }, [params, loadContacts]);
 
+  // Handle form submissions for creating/updating contacts
   const handleSubmit = async (data: any) => {
     try {
       if (selectedContact) {
@@ -160,6 +188,7 @@ export default function Contacts() {
       setIsDialogOpen(false);
       setSelectedContact(null);
     } catch (error) {
+      console.error('Error saving contact:', error);
       toast({
         variant: 'destructive',
         title: 'Erreur',
@@ -168,6 +197,7 @@ export default function Contacts() {
     }
   };
 
+  // Handle filter changes
   const handleFilterChange = (key: keyof FilterState) => {
     setFilters((prev) => {
       const newFilters = { ...prev };
@@ -183,114 +213,87 @@ export default function Contacts() {
     setCurrentPage(1);
   };
 
+  // Clear all filters
   const clearFilters = () => {
     setFilters({});
     setSearchTerm('');
+    setDebouncedSearchTerm('');
     setSortConfig({ column: '', direction: '' });
     setCurrentPage(1);
   };
 
-  const columns: ColumnDef<Contact>[] = [
-    {
-      accessorKey: 'nom',
-      header: 'Nom',
-      cell: ({ row }) => <div>{row.original.nom}</div>,
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'prenom',
-      header: 'Prénom',
-      cell: ({ row }) => <div>{row.original.prenom}</div>,
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'fonction',
-      header: 'Fonction',
-      enableSorting: false,
-    },
-    {
-      accessorKey: 'mobile',
-      header: 'Téléphone mobile',
-      enableSorting: false,
-    },
-    {
-      accessorKey: 'dateadhesion',
-      header: "Date d'adhésion",
-      cell: ({ row }) => (
-        <div>{format(new Date(row.original.dateadhesion), 'dd/MM/yyyy')}</div>
-      ),
-      enableSorting: true,
-    },
-    {
-      id: 'roles',
-      header: 'Rôles',
-      cell: ({ row }) => (
-        <div className="flex flex-wrap gap-1">
-          {row.original.adherent && (
-            <Badge variant="secondary">Adhérent</Badge>
-          )}
-          {row.original.membrefondateur && (
-            <Badge variant="secondary">Fondateur</Badge>
-          )}
-          {row.original.membrecotisant && (
-            <Badge variant="secondary">Cotisant</Badge>
-          )}
-          {row.original.donateur && (
-            <Badge variant="secondary">Donateur</Badge>
-          )}
-          {row.original.agentrecette && (
-            <Badge variant="secondary">Agent recette</Badge>
-          )}
-        </div>
-      ),
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            setSelectedContact(row.original);
-            setIsDialogOpen(true);
-          }}
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
-      ),
-    },
-  ];
-
-  if (loading) {
-    return (
-      <Container size="full" className="h-full flex flex-col p-0">
-        <Card>
-          <CardHeader>
-            <Flex justify="between" align="center">
-              <CardTitle>Contacts</CardTitle>
-              <Skeleton className="h-10 w-[200px]" />
-            </Flex>
-          </CardHeader>
-          <CardContent>
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <Skeleton className="h-8 w-32 mb-4" />
-                <div className="grid grid-cols-5 gap-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-10" />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            <div className="space-y-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          </CardContent>
-        </Card>
-      </Container>
-    );
-  }
+  // Define table columns
+  const columns = useMemo<ColumnDef<Contact>[]>(
+    () => [
+      {
+        accessorKey: 'nom',
+        header: 'Nom',
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'prenom',
+        header: 'Prénom',
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'fonction',
+        header: 'Fonction',
+        enableSorting: false,
+      },
+      {
+        accessorKey: 'mobile',
+        header: 'Téléphone mobile',
+        enableSorting: false,
+      },
+      {
+        accessorKey: 'dateadhesion',
+        header: "Date d'adhésion",
+        cell: ({ row }) => (
+          <div>{format(new Date(row.original.dateadhesion), 'dd/MM/yyyy')}</div>
+        ),
+        enableSorting: true,
+      },
+      {
+        id: 'roles',
+        header: 'Rôles',
+        cell: ({ row }) => (
+          <div className="flex flex-wrap gap-1">
+            {row.original.adherent && (
+              <Badge variant="secondary">Adhérent</Badge>
+            )}
+            {row.original.membrefondateur && (
+              <Badge variant="secondary">Fondateur</Badge>
+            )}
+            {row.original.membrecotisant && (
+              <Badge variant="secondary">Cotisant</Badge>
+            )}
+            {row.original.donateur && (
+              <Badge variant="secondary">Donateur</Badge>
+            )}
+            {row.original.agentrecette && (
+              <Badge variant="secondary">Agent recette</Badge>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: 'actions',
+        cell: ({ row }) => (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setSelectedContact(row.original);
+              setIsDialogOpen(true);
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <Container size="full" className="h-full flex flex-col p-0">
@@ -334,14 +337,6 @@ export default function Contacts() {
                     )}
                   </Flex>
                 </Flex>
-              </div>
-
-              <div className="mb-6">
-                <Input
-                  placeholder="Rechercher par nom ou prénom..."
-                  onChange={handleSearchChange}
-                  className="max-w-sm"
-                />
               </div>
 
               <div className="grid grid-cols-5 gap-6">
@@ -407,10 +402,26 @@ export default function Contacts() {
             </CardContent>
           </Card>
 
+          <div className="mb-6">
+            <Input
+              placeholder="Rechercher par nom ou prénom..."
+              onChange={handleSearchChange}
+              value={searchTerm}
+              className="max-w-sm"
+            />
+          </div>
+
+          {loading  ? (
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          ) : (
           <DataTable
             columns={columns}
             data={contacts}
-            onSort={handleSort}
+            sorting={sorting}
+            onSortingChange={handleSortingChange}
             pagination={{
               pageSize,
               pageCount: Math.ceil(totalItems / pageSize),
@@ -420,6 +431,7 @@ export default function Contacts() {
               onPageSizeChange: handlePageSizeChange,
             }}
           />
+        )}
         </CardContent>
       </Card>
 
