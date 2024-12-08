@@ -5,6 +5,7 @@ import Adherents from "./pages/Adherents";
 import Contacts from "./pages/Contacts";
 import ComptesBancaires from "./pages/ComptesBancaires";
 import AnneesScolaires from "./pages/AnneesScolaires";
+import Audit from "./pages/Audit";
 import Operations from "./pages/Operations";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -35,6 +36,7 @@ function App() {
             <Route path="operations" element={<Operations />} />
             <Route path="annees-scolaires" element={<AnneesScolaires />} />
             <Route path="change-password" element={<ChangePassword />} />
+            <Route path="audit" element={<Audit />} />
           </Route>
         </Routes>
         <Toaster />

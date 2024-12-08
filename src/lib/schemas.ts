@@ -83,7 +83,7 @@ export const operationSchema = z.object({
 });
 
 export const adherentSchema = z.object({
-  idcontact: z.number().min(1, 'Le contact est requis'),
+  idcotisantecole: z.number().min(1, 'Le contact est requis'),
   anneescolaire: z.number().min(2000, "L'année scolaire est requise"),
   nbenfants: z.number().min(0, "Le nombre d'enfants doit être positif"),
 });

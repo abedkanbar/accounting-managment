@@ -26,11 +26,12 @@ import { useState } from 'react';
 
 const menuItems = [
   { path: '/', label: 'Tableau de bord', icon: LayoutDashboard },
-  { path: '/adherents', label: 'Adhérents', icon: Users },
-  { path: '/contacts', label: 'Contacts', icon: Contact2 },
   { path: '/comptes', label: 'Comptes Bancaires', icon: CreditCard },
+  { path: '/contacts', label: 'Contacts', icon: Contact2 },
+  { path: '/adherents', label: 'Adhérents', icon: Users },
   { path: '/operations', label: 'Operations', icon: Calendar },
-  { path: '/annees-scolaires', label: 'Années Scolaires', icon: GraduationCap },
+  { path: '/annees-scolaires', label: 'Années Scolaires', icon: GraduationCap },  
+  { path: '/audit', label: 'Audit', icon: GraduationCap },
 ];
 
 export default function Navbar() {

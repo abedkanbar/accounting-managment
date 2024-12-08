@@ -145,7 +145,7 @@ export default function Adherents() {
   const handleSubmit = async (data: AdherentFormData) => {
     try {
       if (selectedAdherent) {
-        await updateAdherent(selectedAdherent.idcontact, data);
+        await updateAdherent(selectedAdherent.idcotisantecole, data);
         toast({
           variant: "success",
           title: "Succès",

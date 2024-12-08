@@ -45,7 +45,7 @@ export const generateOperationsReport = ({
 
   doc.text(`Total Crédit: ${totalCredit} €`, 15, 40);
   doc.text(`Total Débit: ${totalDebit} €`, 15, 50);
-  doc.text(`Balance: ${balance} €`, 15, 60);
+  doc.text(`Balancezz: ${parseFloat(balance).toFixed(2)} €`, 15, 60);
   doc.text(`Nombre d'opérations: ${allOperations.length}`, 15, 70);
 
   // Table des opérations

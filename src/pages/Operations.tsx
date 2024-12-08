@@ -144,6 +144,7 @@ export default function Operations() {
           params.moyenpaiement,
           params.moiscotisation,
           params.anneecotisation,
+          undefined,
           params.orderBy,
           params.orderDir
         );
@@ -359,6 +360,7 @@ export default function Operations() {
       filters.moyenPaiement,
       filters.moiscotisation,
       filters.anneecotisation,
+      undefined,
       sortConfig.column,
       sortConfig.direction
     );

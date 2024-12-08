@@ -1,6 +1,6 @@
 // Interfaces
 export interface AdherentsEcole {
-  idcontact: number;
+  idcotisantecole: number;
   prenom: string;
   nom: string;
   anneescolaire: number;
@@ -155,7 +155,7 @@ async function fetchAPI(
 ): Promise<any> {
   const defaultHeaders = {
     'Content-Type': 'application/json',
-    Authorization: 'amUgc3VpcyDDoCBsJ2FicmkgZGUgdG91dCBjZSBxdWkgcGFzc2U=',
+    Authorization: `${import.meta.env.VITE_API_TOKEN}`,
   };
 
   const mergedOptions = {
@@ -229,6 +229,7 @@ async function getOperations(
   moyenpaiement?: number,
   moiscotisation?: number,
   anneecotisation?: number,
+  nomOuPrenom?: number,
   orderBy?: string,
   orderDir?: string
 ): Promise<PaginatedResponse<Operation>> {
@@ -247,6 +248,10 @@ async function getOperations(
 
   if (anneecotisation != undefined) {
     conditions.push(`anneecotisation=${anneecotisation}`);
+  }
+
+  if (nomOuPrenom != undefined) {
+    conditions.push(`nomOuPrenom=${nomOuPrenom}`);
   }
 
   if (orderBy != undefined) {

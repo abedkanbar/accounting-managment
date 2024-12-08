@@ -135,7 +135,7 @@ export function AdherentForm({ onSubmit, initialData, contacts: initialContacts,
 
   const handleSelectContact = (contact: Contact) => {
     setSelectedContact(contact);
-    form.setValue("idcontact", contact.idcontact);
+    form.setValue("idcotisantecole", contact.idcontact);
     setOpenContact(false);
   };
 

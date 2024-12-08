@@ -4,7 +4,13 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -16,16 +22,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 
-const changePasswordSchema = z.object({
-  currentPassword: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
-  newPassword: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
-  confirmPassword: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Les mots de passe ne correspondent pas",
-  path: ["confirmPassword"],
-});
+const changePasswordSchema = z
+  .object({
+    currentPassword: z
+      .string()
+      .min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
+    newPassword: z
+      .string()
+      .min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
+    confirmPassword: z
+      .string()
+      .min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Les mots de passe ne correspondent pas',
+    path: ['confirmPassword'],
+  });
 
 type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 
@@ -47,22 +61,23 @@ export default function ChangePassword() {
     try {
       setIsLoading(true);
       const { error } = await supabase.auth.updateUser({
-        password: data.newPassword
+        password: data.newPassword,
       });
 
       if (error) throw error;
 
       toast({
-        title: "Mot de passe modifié",
-        description: "Votre mot de passe a été mis à jour avec succès",
+        variant: 'success',
+        title: 'Mot de passe modifié',
+        description: 'Votre mot de passe a été mis à jour avec succès',
       });
-      
+
       navigate('/');
     } catch (error: any) {
       toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error.message || "Une erreur est survenue",
+        variant: 'destructive',
+        title: 'Erreur',
+        description: error.message || 'Une erreur est survenue',
       });
     } finally {
       setIsLoading(false);
@@ -90,11 +105,7 @@ export default function ChangePassword() {
                   <FormItem>
                     <FormLabel>Mot de passe actuel</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        {...field}
-                        disabled={isLoading}
-                      />
+                      <Input type="password" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -107,11 +118,7 @@ export default function ChangePassword() {
                   <FormItem>
                     <FormLabel>Nouveau mot de passe</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        {...field}
-                        disabled={isLoading}
-                      />
+                      <Input type="password" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -124,11 +131,7 @@ export default function ChangePassword() {
                   <FormItem>
                     <FormLabel>Confirmer le mot de passe</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        {...field}
-                        disabled={isLoading}
-                      />
+                      <Input type="password" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -143,17 +146,14 @@ export default function ChangePassword() {
                 >
                   Annuler
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                >
+                <Button type="submit" disabled={isLoading}>
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Modification en cours...
                     </>
                   ) : (
-                    "Modifier le mot de passe"
+                    'Modifier le mot de passe'
                   )}
                 </Button>
               </div>
