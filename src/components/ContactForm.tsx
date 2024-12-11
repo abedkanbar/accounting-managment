@@ -47,12 +47,14 @@ export function ContactForm({ onSubmit, initialData }: ContactFormProps) {
       prenom: initialData?.prenom || '',
       nom: initialData?.nom || '',
       alias: initialData?.alias || '',
-      adherent: initialData?.adherent || false,
-      membrefondateur: initialData?.membrefondateur || false,
-      membrecotisant: initialData?.membrecotisant || false,
-      donateur: initialData?.donateur || false,
-      agentrecette: initialData?.agentrecette || false,
-      dateadhesion: initialData?.dateadhesion || new Date(),
+      adherent: initialData?.adherent || 0,
+      membrefondateur: initialData?.membrefondateur || 0,
+      membrecotisant: initialData?.membrecotisant || 0,
+      donateur: initialData?.donateur || 0,
+      agentrecette: initialData?.agentrecette || 0,
+      dateadhesion: initialData?.dateadhesion
+      ? new Date(initialData.dateadhesion)
+      : new Date(),
       fonction: initialData?.fonction || '',
       telfix: initialData?.telfix || '',
       fax: initialData?.fax || '',
@@ -64,7 +66,7 @@ export function ContactForm({ onSubmit, initialData }: ContactFormProps) {
       pays: initialData?.pays || 'France',
       email: initialData?.email || '',
       montantcotisation: initialData?.montantcotisation || 0,
-      idagentrecetteref: initialData?.idagentrecetteref || '',
+      idagentrecetteref: initialData?.idagentrecetteref || 0
     },
   });
 
@@ -350,9 +352,12 @@ export function ContactForm({ onSubmit, initialData }: ContactFormProps) {
                 <FormControl>
                   <Input
                     type="date"
-                    {...field}
-                    value={format(field.value, 'yyyy-MM-dd')}
-                    onChange={(e) => field.onChange(new Date(e.target.value))}
+                    value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? new Date(e.target.value) : null
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -368,9 +373,9 @@ export function ContactForm({ onSubmit, initialData }: ContactFormProps) {
               <FormItem className="flex items-center space-x-2">
                 <FormControl>
                   <Checkbox
-                    checked={field.value === true}
+                    checked={field.value === 1}
                     onCheckedChange={(checked) =>
-                      field.onChange(checked ? true : false)
+                      field.onChange(checked ? 1 : 0)
                     }
                   />
                 </FormControl>
@@ -385,9 +390,9 @@ export function ContactForm({ onSubmit, initialData }: ContactFormProps) {
               <FormItem className="flex items-center space-x-2">
                 <FormControl>
                   <Checkbox
-                    checked={field.value === true}
+                    checked={field.value === 1}
                     onCheckedChange={(checked) =>
-                      field.onChange(checked ? true : false)
+                      field.onChange(checked ? 1 : 0)
                     }
                   />
                 </FormControl>
@@ -402,9 +407,9 @@ export function ContactForm({ onSubmit, initialData }: ContactFormProps) {
               <FormItem className="flex items-center space-x-2">
                 <FormControl>
                   <Checkbox
-                    checked={field.value === true}
+                    checked={field.value === 1}
                     onCheckedChange={(checked) =>
-                      field.onChange(checked ? true : false)
+                      field.onChange(checked ? 1 : 0)
                     }
                   />
                 </FormControl>
@@ -419,9 +424,9 @@ export function ContactForm({ onSubmit, initialData }: ContactFormProps) {
               <FormItem className="flex items-center space-x-2">
                 <FormControl>
                   <Checkbox
-                    checked={field.value === true}
+                    checked={field.value === 1}
                     onCheckedChange={(checked) =>
-                      field.onChange(checked ? true : false)
+                      field.onChange(checked ? 1 : 0)
                     }
                   />
                 </FormControl>
@@ -436,9 +441,9 @@ export function ContactForm({ onSubmit, initialData }: ContactFormProps) {
               <FormItem className="flex items-center space-x-2">
                 <FormControl>
                   <Checkbox
-                    checked={field.value === true}
+                    checked={field.value === 1}
                     onCheckedChange={(checked) =>
-                      field.onChange(checked ? true : false)
+                      field.onChange(checked ? 1 : 0)
                     }
                   />
                 </FormControl>

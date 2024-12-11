@@ -46,6 +46,8 @@ export function GroupedOperations({
 
   const getGroupKey = (operation: Operation, groupType: string): string => {
     switch (groupType) {
+      case 'year':
+        return `${operation.anneecotisation}`;
       case 'month':
         return format(new Date(operation.dateoperation), 'MMMM yyyy', { locale: fr });
       case 'contact':

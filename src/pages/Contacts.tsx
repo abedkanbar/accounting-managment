@@ -27,11 +27,11 @@ import { Input } from '@/components/ui/input';
 import debounce from 'lodash/debounce';
 
 interface FilterState {
-  adherent?: boolean;
-  membrefondateur?: boolean;
-  membrecotisant?: boolean;
-  donateur?: boolean;
-  agentrecette?: boolean;
+  adherent?: number;
+  membrefondateur?: number;
+  membrecotisant?: number;
+  donateur?: number;
+  agentrecette?: number;
 }
 
 export default function Contacts() {
@@ -202,9 +202,9 @@ export default function Contacts() {
     setFilters((prev) => {
       const newFilters = { ...prev };
       if (newFilters[key] === undefined) {
-        newFilters[key] = true;
-      } else if (newFilters[key] === true) {
-        newFilters[key] = false;
+        newFilters[key] = 1;
+      } else if (newFilters[key] === 1) {
+        newFilters[key] = 0;
       } else {
         delete newFilters[key];
       }
@@ -258,19 +258,19 @@ export default function Contacts() {
         header: 'Rôles',
         cell: ({ row }) => (
           <div className="flex flex-wrap gap-1">
-            {row.original.adherent && (
+            {row.original.adherent == 1 && (
               <Badge variant="secondary">Adhérent</Badge>
             )}
-            {row.original.membrefondateur && (
+            {row.original.membrefondateur == 1 && (
               <Badge variant="secondary">Fondateur</Badge>
             )}
-            {row.original.membrecotisant && (
+            {row.original.membrecotisant == 1 && (
               <Badge variant="secondary">Cotisant</Badge>
             )}
-            {row.original.donateur && (
+            {row.original.donateur == 1 && (
               <Badge variant="secondary">Donateur</Badge>
             )}
-            {row.original.agentrecette && (
+            {row.original.agentrecette == 1 && (
               <Badge variant="secondary">Agent recette</Badge>
             )}
           </div>
@@ -343,10 +343,10 @@ export default function Contacts() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="adherent"
-                    checked={filters.adherent === true}
+                    checked={filters.adherent === 1}
                     onCheckedChange={() => handleFilterChange('adherent')}
                     className={
-                      filters.adherent === false ? 'bg-destructive' : ''
+                      filters.adherent === 0 ? 'bg-destructive' : ''
                     }
                   />
                   <Label htmlFor="adherent">Adhérent</Label>
@@ -355,12 +355,12 @@ export default function Contacts() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="membrefondateur"
-                    checked={filters.membrefondateur === true}
+                    checked={filters.membrefondateur === 1}
                     onCheckedChange={() =>
                       handleFilterChange('membrefondateur')
                     }
                     className={
-                      filters.membrefondateur === false ? 'bg-destructive' : ''
+                      filters.membrefondateur === 0 ? 'bg-destructive' : ''
                     }
                   />
                   <Label htmlFor="membrefondateur">Membre fondateur</Label>
@@ -368,10 +368,10 @@ export default function Contacts() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="membrecotisant"
-                    checked={filters.membrecotisant === true}
+                    checked={filters.membrecotisant === 1}
                     onCheckedChange={() => handleFilterChange('membrecotisant')}
                     className={
-                      filters.membrecotisant === false ? 'bg-destructive' : ''
+                      filters.membrecotisant === 0 ? 'bg-destructive' : ''
                     }
                   />
                   <Label htmlFor="membrecotisant">Membre cotisant</Label>
@@ -379,10 +379,10 @@ export default function Contacts() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="donateur"
-                    checked={filters.donateur === true}
+                    checked={filters.donateur === 1}
                     onCheckedChange={() => handleFilterChange('donateur')}
                     className={
-                      filters.donateur === false ? 'bg-destructive' : ''
+                      filters.donateur === 0 ? 'bg-destructive' : ''
                     }
                   />
                   <Label htmlFor="donateur">Donateur</Label>
@@ -390,10 +390,10 @@ export default function Contacts() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="agentrecette"
-                    checked={filters.agentrecette === true}
+                    checked={filters.agentrecette === 1}
                     onCheckedChange={() => handleFilterChange('agentrecette')}
                     className={
-                      filters.agentrecette === false ? 'bg-destructive' : ''
+                      filters.agentrecette === 0 ? 'bg-destructive' : ''
                     }
                   />
                   <Label htmlFor="agentrecette">Agent de recette</Label>

@@ -15,6 +15,7 @@ export function GroupingSelect({ value, onChange }: GroupingSelectProps) {
   const groupingOptions = [
     { value: 'none', label: 'Sans groupement' },
     { value: 'month', label: 'Par mois' },
+    { value: 'year', label: 'Par année' },
     { value: 'contact', label: 'Par adhérent' },
     { value: 'type', label: 'Par type' },
     { value: 'bank_account', label: 'Par compte bancaire' }

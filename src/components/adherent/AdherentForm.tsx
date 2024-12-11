@@ -42,8 +42,8 @@ export function AdherentForm({ onSubmit, initialData, contacts: initialContacts,
   const [searchResults, setSearchResults] = useState<Contact[]>(initialContacts);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(
-    initialData?.idcontact 
-      ? initialContacts.find(c => c.idcontact === initialData.idcontact) || null 
+    initialData?.idcotisantecole
+      ? initialContacts.find(c => c.idcontact === initialData.idcotisantecole) || null
       : null
   );
 
@@ -52,7 +52,7 @@ export function AdherentForm({ onSubmit, initialData, contacts: initialContacts,
   const form = useForm<AdherentFormData>({
     resolver: zodResolver(adherentSchema),
     defaultValues: {
-      idcontact: initialData?.idcontact || 0,
+      idcotisantecole: initialData?.idcotisantecole || 0,
       anneescolaire: initialData?.anneescolaire || new Date().getFullYear(),
       nbenfants: initialData?.nbenfants || 0,
     },
@@ -144,7 +144,7 @@ export function AdherentForm({ onSubmit, initialData, contacts: initialContacts,
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="idcontact"
+          name="idcotisantecole"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Contact</FormLabel>

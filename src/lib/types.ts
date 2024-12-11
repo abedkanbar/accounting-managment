@@ -2,11 +2,11 @@
 export interface ContactsParams {
   page: number;
   limit: number;
-  adherent?: boolean;
-  membrefondateur?: boolean;
-  membrecotisant?: boolean;
-  donateur?: boolean;
-  agentrecette?: boolean;
+  adherent?: number;
+  membrefondateur?: number;
+  membrecotisant?: number;
+  donateur?: number;
+  agentrecette?: number;
   orderBy?: string;
   orderDir?: 'asc' | 'desc';
   nomOuPrenom?: string;
