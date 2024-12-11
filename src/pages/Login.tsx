@@ -1,15 +1,21 @@
-import { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '../lib/auth';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useAuth } from "../lib/auth";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import logo from "@/assets/logo.png";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -18,10 +24,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  AvatarFallback,
+  AvatarImage,
+  AvatarRoot,
+} from "@/components/ui/avatar";
 
 const loginSchema = z.object({
-  email: z.string().email('Email invalide'),
-  password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
+  email: z.string().email("Email invalide"),
+  password: z
+    .string()
+    .min(6, "Le mot de passe doit contenir au moins 6 caractères"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -36,12 +49,12 @@ const Login = () => {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
   });
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || "/";
 
   const onSubmit = async (data: LoginFormData) => {
     try {
@@ -64,24 +77,35 @@ const Login = () => {
   };
 
   const handleForgotPassword = () => {
-    navigate('/forgot-password');
+    navigate("/forgot-password");
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md p-8">
         <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">
-              Association Al Nour
-            </CardTitle>
-            <CardDescription className="text-center">
-              Connectez-vous à votre compte
-            </CardDescription>
+          <CardHeader className="flex items-center space-x-4">
+            <AvatarRoot className="AvatarRoot">
+              <AvatarImage
+                className="AvatarImage"
+                src={logo}
+                alt="Association Al Nour"
+              />
+            </AvatarRoot>
+            <div>
+              <CardTitle className="text-2xl font-bold">
+                Association Al Nour
+              </CardTitle>
+              <CardDescription>Connectez-vous à votre compte</CardDescription>
+            </div>
           </CardHeader>
+
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={form.control}
                   name="email"
@@ -117,11 +141,7 @@ const Login = () => {
                     </FormItem>
                   )}
                 />
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading}
-                >
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
